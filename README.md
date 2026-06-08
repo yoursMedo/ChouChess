@@ -9,7 +9,7 @@ Built on top of [0xBitBuster/python-chess-engine](https://github.com/0xBitBuster
 ## Getting started
 
 ```bash
-git clone https://github.com/yoursMedo/chill-chess.git
+git clone https://github.com/yoursMedo/ChouChess
 cd chill-chess
 python3 -m venv venv
 source venv/bin/activate
