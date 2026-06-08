@@ -1,40 +1,31 @@
-# Python Chess Engine with AI
+# Chill Chess
 
-![Showcase Image](https://i.ibb.co/XbLzmW6/Screenshot-1.png)
+Dedicated to meri jaan.
 
-This is a Python-based (pygame) chess engine that allows users to play against a computer opponent or a second player. The engine follows the standard rules of chess and features somewhat efficient move generation using the nega max algorithm. It also includes a beautiful GUI with valid move visualization and a move log.
+Built on top of [0xBitBuster/python-chess-engine](https://github.com/0xBitBuster/python-chess-engine). Audio samples sourced from [gleitz/midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts) and processed with a custom reverb algorithm not included in this package.
 
-## Features
-- [x] **Chess Rules**: The engine follows the standard rules of chess including enpassant, castling and moving the pieces
-- [x] **AI**: Play against your computer using the nega max algorithm which finds the best possible move recursively using alpha beta pruning
-- [x] **GUI**: The project makes use of the pygame library to create a beautiful graphical user interface and draw text, rectangles and images onto the screen.
-- [x] **Extras**: such as undoing a move, sound effects and a move log
+---
 
-## Getting Started
-### Prerequisites
-- Python 3
+## Getting started
 
-### Installation
-1. Clone the repository to your local machine:
 ```bash
-git clone https://github.com/0xBitBuster/python-chess-engine.git
-```
-2. Install all requirements using pip:
-```
-pip3 install -r requirements.txt
-```
-
-### Usage
-To start the game you can either do it in your IDE or manually:
-```bash
+git clone https://github.com/yourusername/chill-chess.git
+cd chill-chess
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 python3 ChessMain.py
 ```
+---
 
-## Quick Note / Todo
-This code does not use the python best practice for the naming convention (The project uses camelCasing instead of lowercase_underscore). You can also try to optimize the negamax and find valid moves algorithm. Maybe even create a UI to select wether you want to play against the computer or another player.
+## How it works
 
-## Contributing
-Contributions are welcome! If you have a feature request or bug report, please open an issue. If you want to contribute code, please fork the repository and submit a pull request.
+Each move triggers a music box note. A pointer starts at C4 in the following array of natural notes:
 
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
+```
+A3  B3  C4  D4  E4  F4  G4  A4  B4  C5  D5  E5  F5  G5
+```
+
+When white moves a piece, the pointer shifts right by the Manhattan distance of that move. When black moves, the pointer shifts left by the same measure. The array wraps at both ends. The note at the new pointer position is played on its own mixer channel — white and black have separate channels so their notes never interrupt each other. A birdsong recording loops softly in the background throughout the game.
+
+---

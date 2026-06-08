@@ -8,6 +8,7 @@ import ChessEngine
 import ChessAI
 from multiprocessing import Process, Queue
 
+
 BOARD_WIDTH = BOARD_HEIGHT = 512
 MOVE_LOG_PANEL_WIDTH = 250
 MOVE_LOG_PANEL_HEIGHT = BOARD_HEIGHT
@@ -16,6 +17,9 @@ SQ_SIZE = BOARD_HEIGHT // DIMENSION
 MAX_FPS = 15  # Mainly for animations
 IMAGES = {}
 COLORS = [p.Color("white"), p.Color("gray")]
+NOTES = ['A3','B3','C4','D4','E4','F4','G4','A4','B4','C5','D5','E5','F5','G5']
+NOTE_POINTER = 2  # starts at C4
+
 
 """
 Initialize global dictionary of images. 
@@ -23,7 +27,6 @@ This will be called exactly once in the main function
 """
 def loadImages():
     pieces = ['wp', 'wR', 'wN', 'wB', 'wK', 'wQ', 'bp', 'bR', 'bN', 'bB', 'bK', 'bQ']
-
     for piece in pieces:
         IMAGES[piece] = p.transform.scale(p.image.load("images/" + piece + ".png"), (SQ_SIZE, SQ_SIZE))
 
@@ -33,8 +36,13 @@ The main driver for the code.
 It will handle user input and updating the graphics
 """
 def main():
+    global NOTE_POINTER
     p.init()
     p.mixer.init()
+    p.mixer.set_num_channels(3)  # channel 0: white, channel 1: black, channel 2: reserved
+    white_channel = p.mixer.Channel(0)
+    black_channel = p.mixer.Channel(1)
+
     screen = p.display.set_mode([BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT])
     clock = p.time.Clock()
     moveLogFont = p.font.SysFont("Arial", 14, False, False)
@@ -54,6 +62,11 @@ def main():
     running = True
 
     loadImages()
+
+    # Start birdsong looping in background on the music channel
+    p.mixer.music.load("audio/birdsong.wav")
+    p.mixer.music.set_volume(0.4)
+    p.mixer.music.play(-1)  # -1 = loop forever
 
     while running:
         isHumanTurn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
@@ -105,6 +118,7 @@ def main():
                     moveMade = False
                     animate = False
                     gameOver = False
+                    NOTE_POINTER = 2  # reset pointer to C4
                     if AIThinking:
                         moveFinderProcess.terminate()
                         AIThinking = False
@@ -129,7 +143,8 @@ def main():
 
         if moveMade:
             if animate:
-                animateMove(gs.moveLog[-1], screen, gs.board, clock)
+                animateMove(gs.moveLog[-1], screen, gs.board, clock, not gs.whiteToMove,
+                            white_channel, black_channel)
             validMoves = gs.getValidMoves()
             moveMade = False
             animate = False
@@ -198,7 +213,6 @@ def drawPieces(screen, board):
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             piece = board[r][c]
-
             if piece != "--":
                 screen.blit(IMAGES[piece], p.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
@@ -235,15 +249,31 @@ def drawMoveLog(screen, gs, font):
 
 
 """
-Animating a move including playing the sound
+Animating a move and playing the corresponding music box note.
+White plays on channel 0, black plays on channel 1 — independently, never cutting each other off.
 """
-def animateMove(move, screen, board, clock):
-    if move.isCapture:
-        p.mixer.music.load("audio/capture.mp3")
-        p.mixer.music.play()
+def animateMove(move, screen, board, clock, isWhiteTurn, white_channel, black_channel):
+    global NOTE_POINTER
+
+    # Calculate Manhattan distance (number of boxes moved)
+    n = abs(move.endRow - move.startRow) + abs(move.endCol - move.startCol)
+
+    # White moves pointer right, black moves pointer left
+    if isWhiteTurn:
+        NOTE_POINTER = (NOTE_POINTER + n) % len(NOTES)
     else:
-        p.mixer.music.load("audio/move.mp3")
-        p.mixer.music.play()
+        NOTE_POINTER = (NOTE_POINTER - n) % len(NOTES)
+
+    # Load and play note on the appropriate channel
+    note_name = NOTES[NOTE_POINTER]
+    note_path = f"audio/music_box_reverb/{note_name}.mp3"
+    note_sound = p.mixer.Sound(note_path)
+    note_sound.set_volume(0.8)
+
+    if isWhiteTurn:
+        white_channel.play(note_sound)
+    else:
+        black_channel.play(note_sound)
 
     dR = move.endRow - move.startRow
     dC = move.endCol - move.startCol
