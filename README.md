@@ -1,4 +1,4 @@
-# Chill Chess
+# Chou Chess
 
 Dedicated to meri jaan.
 
